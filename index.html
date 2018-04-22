@@ -1,0 +1,110 @@
+<!DOCTYPE html><html>
+  <head>
+    <meta charset="UTF-8" /> 
+    <title>Lab 7 Programación Web</title>
+    <script src="react.development.js"></script>
+    <script src="react-dom.development.js"></script>
+    <script src="babel.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="style.css">
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="text/babel">
+        var countries;
+        fetch('https://raw.githubusercontent.com/lukes/ISO-3166-Countries-with-Regional-Codes/master/all/all.json', {method: 'get'})
+        .then( response => response.json())
+        .then(data => countries = data)
+        .then( _ => divideRegionsData())
+        .then( regions => ReactDOM.render(<App regions={regions}/>, document.getElementById('root')) )
+        .catch(error => console.log(error));
+
+        var App = props => {
+            return (
+                <div>
+                    <Regions regions={props.regions}/>
+                </div>
+            );
+        }
+
+        var renderRegions = regions =>{
+            return regions.map(element => <div key={element.name}><h2>Region:{element.name}</h2><SubRegions elemSubReg={element.subRegions}/></div>);
+        }
+
+        var Regions = props => {
+            console.log(props);
+            return (
+                <div>
+                    {renderRegions(props.regions)}
+                </div>
+            );
+        }
+
+         var renderSubRegions = subregions =>{
+            return subregions.map(element => <div  key={element.name}><h3>Sub Region: {element.name}</h3><Countries countries={element.countries}/></div>);
+        }
+
+        var SubRegions = props =>{
+            return ( <div>
+                        {renderSubRegions(props.elemSubReg)}
+                    </div>
+            );
+        }
+
+        var renderCountries = countries =>{
+            return countries.map(element => <h5 key={element.name}>Country: {element.name}</h5>);
+        }
+
+        var Countries = props =>{
+            return ( <div>
+                        {renderCountries(props.countries)}
+                    </div>
+            );
+        }
+
+        var divideRegionsData = _ =>{
+            var regions = [];
+            for(var i=0; i < countries.length; i++){
+                var regionName = countries[i].region;
+                var subRegionName = countries[i]['sub-region'];
+                var countryName = countries[i].name;
+                var isRegionRepeated = false;
+                var isSubRegionRepeated = false;
+                if(i==0){
+                    regions.push({name: regionName,
+                    subRegions: [{name: subRegionName,
+                                  countries: [ {name: countryName}
+                                ]}
+                                ]
+                                 });
+                }
+                else{ for(var w = 0; w < regions.length; w++){
+                        if(regions[w].name == regionName){
+                            isRegionRepeated = true;
+                            for(var z = 0; z < regions[w].subRegions.length; z++){
+                                if(regions[w].subRegions[z].name == subRegionName){
+                                    isSubRegionRepeated = true;
+                                    regions[w].subRegions[z].countries.push({name:countryName}); 
+                                } 
+                            }
+                            if(!isSubRegionRepeated){
+                                regions[w].subRegions.push({name: subRegionName,
+                                 countries: [ {name: countryName} ]
+                                });
+                                isSubRegionRepeated = false;
+                            }
+                        }
+                    }
+                    if(!isRegionRepeated){
+                        regions.push({name:regionName,
+                        subRegions: [{name: subRegionName,
+                                      countries: [ {name: countryName} ]}]
+                                    });
+                        isRegionRepeated = false;
+                    }        
+                }
+            }
+            return regions;
+        }
+    </script>
+  </body>
+</html>
